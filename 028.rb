@@ -1,10 +1,10 @@
 # https://projecteuler.net/problem=28
 
+def f(n)
+  raise "doesn't make sense to have an even sided spiral!" if n.even?
+  n /= 2
+  (16*n*n*n + 30*n*n + 26*n + 3) / 3
+end
 
-max_side_len = 1001
-# max_side_len = 5
-
-1 + (0...max_side_len/2).sum { |i|
-  16*i*i + 36*i + 24
-}
-# => 669171001
+f 5    # => 101
+f 1001 # => 669171001
