@@ -1,114 +1,67 @@
 # https://projecteuler.net/problem=79
 # https://projecteuler.net/project/resources/p079_keylog.txt
 
-def best_indexes(n1, fst, mid, lst)
-  fi = n1.index  fst
-  li = n1.rindex lst
+def best_indexes(n, fst, mid, lst)
+  fi = n.index  fst
+  li = n.rindex lst
 
   # 3 matches
-  if fi && li && fi < li
-    (fi+1...li).each do |mi|
-      next unless n1[mi] == mid
-      return [3, [[nil, nil, nil]]]
-    end
+  fi && li && fi < li && (fi+1...li).each do |mi|
+    n[mi] == mid and return [3, [[nil, nil, nil]]]
   end
 
   # 2 matches
   bests = []
-  if fi && li && fi < li
-    (fi+1..li).each do |mi|
-      bests << [nil, mi, nil]
-    end
+
+  fi && li && fi < li && (fi+1..li).each { |mi| bests << [nil, mi, nil] }
+
+  fi && (fi+1..n.size).each do |mi|
+    n[mi] == mid && (mi+1..n.size).each { |li| bests << [nil, nil, li] }
   end
 
-  if fi
-    (fi+1..n1.size).each do |mi|
-      next unless n1[mi] == mid
-      (mi+1..n1.size).each do |li|
-        bests << [nil, nil, li]
-      end
-    end
-  end
-
-  if li
-    (0...li).each do |mi|
-      next unless n1[mi] == mid
-      (0..mi).each { |fi| bests << [fi, nil, nil] }
-    end
+  li && (0...li).each do |mi|
+    n[mi] == mid && (0..mi).each { |fi| bests << [fi, nil, nil] }
   end
 
   bests.uniq!
-  return [2, bests] if bests.any?
+  bests.any? and return [2, bests]
 
   # 0 matches
-  if !fi && !li && !n1.index(mid)
-    return [
-      0,
-      Enumerator.new do |y|
-        0.upto(n1.size) do |fi|
-          fi.upto(n1.size) do |mi|
-            mi.upto(n1.size) { |li| y << [fi, mi, li] }
-          end
+  !fi && !li && !n.index(mid) and return [
+    0,
+    Enumerator.new do |y|
+      0.upto(n.size) do |fi|
+        fi.upto(n.size) do |mi|
+          mi.upto(n.size) { |li| y << [fi, mi, li] }
         end
       end
-    ]
-  end
+    end
+  ]
 
   # 1 match
   return [
     1,
     Enumerator.new do |y|
-      if fi
-        (fi+1..n1.size).each do |mi|
-          (mi..n1.size).each { |li| y << [nil, mi, li] }
-        end
+      fi && (fi+1..n.size).each do |mi|
+        (mi..n.size).each { |li| y << [nil, mi, li] }
       end
 
-      if li
-        (0..li).each do |mi|
-          (0..mi).each { |fi| y << [fi, mi, nil] }
-        end
+      li && (0..li).each do |mi|
+        (0..mi).each { |fi| y << [fi, mi, nil] }
       end
 
-      n1.each_with_index do |e, mi|
-        next unless e == mid
-        (0..mi).each do |fi|
-          (mi+1..n1.size).each do |li|
-            y << [fi, nil, li]
-          end
+      n.each_with_index do |e, mi|
+        e == mid && (0..mi).each do |fi|
+          (mi+1..n.size).each { |li| y << [fi, nil, li] }
         end
       end
     end
   ]
 end
 
-def count(n1, n2)
-  count, _ = best_indexes n1, *n2
-  count
-end
-
-
-def keep_shorties(arrays)
+def keep_shorties!(arrays)
   size = arrays.min_by(&:size).size
-  arrays.select { |n| n.size == size }
-end
-
-def find_best(aggregate, nums)
-  new_nums = nums.map do |n|
-    num_overlaps, replacements = best_indexes(aggregate, *n)
-    [num_overlaps, n, replacements]
-  end
-  best_count = new_nums.max.first
-  new_nums.select! { |count, n, replacements| count == best_count }
-
-  # don't bother with this optimisation when there was only one match,
-  # b/c counting them, will be expensive
-  if 1 < best_count
-    new_nums.sort_by! { |_, _, replacements| replacements.count }
-  end
-
-  _, best_num, replacements = new_nums.first
-  return best_num, replacements
+  arrays.select! { |n| n.size == size }
 end
 
 def build_interpolations(base, (f, m, l), replacements)
@@ -121,6 +74,17 @@ def build_interpolations(base, (f, m, l), replacements)
   end
 end
 
+def find_best(aggs, nums)
+  nums.min_by do |num|
+    aggs.map { |agg|
+      num_overlaps, _replacements = best_indexes(agg, *num)
+      num_insertions = 3 - num_overlaps
+      agg.size - num_insertions
+    }.min
+  end
+end
+
+
 nums = [
   319, 680, 180, 690, 129, 620, 762, 689, 762, 318,
   368, 710, 720, 710, 629, 168, 160, 689, 716, 731,
@@ -131,23 +95,21 @@ nums = [
 
 
 aggregates = [
-  nums.combination(2).sort_by { |n1, n2| -count(n1, n2) }.first.first
+  nums.combination(2).min_by { |n1, n2|
+    count, _ = best_indexes n1, *n2
+    -count
+  }.first
 ]
 
 until nums.empty?
-  candidates = aggregates.map do |aggregate|
-    n, replacements = find_best aggregate, nums
-    new_aggregates = build_interpolations aggregate, n, replacements
-    [new_aggregates.map(&:size).min, n]
-  end
-  num = candidates.min_by(&:first).last
+  num = find_best aggregates, nums
   nums.delete num
   aggregates = aggregates.flat_map do |aggregate|
     _, replacements = best_indexes aggregate, *num
     build_interpolations aggregate, num, replacements
   end
   aggregates.uniq!
-  aggregates = keep_shorties aggregates
+  keep_shorties! aggregates
 end
 
 aggregates.join  # => "73162890"
