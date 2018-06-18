@@ -1,23 +1,15 @@
 # https://projecteuler.net/problem=58
-
-sides = Enumerator.new do |y|
-  n = 1
-  y << [1, 1]
-  2.step by: 2 do |side|
-    y << [
-      side+1,
-      n += side,
-      n += side,
-      n += side,
-      n += side,
-    ]
-  end
-end
-
 require 'prime'
-primes = total = 0r
-sides.each do |side, *vals|
-  total  += vals.size
-  primes += vals.count { |v| v.prime? }
-  break side if primes/total < 1r/10 && 1 < total
+
+num    = 1
+primes = 0.0
+total  = 1
+
+2.step by: 2 do |side|
+  total += 4
+  4.times do
+    num += side
+    primes += 1 if num.prime?
+  end
+  break side+1 if primes/total < 0.10
 end # => 26241
