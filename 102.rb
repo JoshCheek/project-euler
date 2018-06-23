@@ -1,18 +1,22 @@
 # https://projecteuler.net/problem=102
 
 def contains_origin?(x1, y1, x2, y2, x3, y3)
-  alpha = ((y2 - y3)*(-x3) + (x3 - x2)*(-y3)) /
-        ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
-
+  # https://stackoverflow.com/questions/13300904/determine-whether-point-lies-inside-triangle
+  alpha = (
+    (y2 - y3)*-x3 + (x3 - x2)*-y3
+  ) / (
+    (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3)
+  )
   return false unless 0 <= alpha
 
-  beta = ((y3 - y1)*(-x3) + (x1 - x3)*(-y3)) /
-       ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
-
+  beta = (
+    (y3 - y1)*-x3 + (x1 - x3)*-y3
+  ) / (
+    (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3)
+  )
   return false unless 0 <= beta
 
-  gamma = 1.0 - alpha - beta;
-
+  gamma = 1.0 - alpha - beta
   return false unless 0 <= gamma
 
   true
