@@ -1,68 +1,37 @@
 # https://projecteuler.net/problem=169
-
-# brute force the solution for small values so we can check our results
-def num_ways(n)
-  max_power    = Math.log(n) / Math.log(2)
-  all_divisors = max_power.to_i.downto(0).map { |i| 2**i }
-  appearances  = all_divisors.map { |p| [[], [p], [p, p]] }
-  potentials   = appearances.reduce do |lefts, rights|
-    lefts.flat_map do |left|
-      rights.map { |right| [*left, *right] }
-    end
-  end
-  potentials.select { |nums| nums.sum == n }.sort.reverse
-end
-
 def num_ways2(n)
-  max_power   = Math.log(n) / Math.log(2)
-  powers      = max_power.to_i.downto(0).to_a
-  divisors    = powers.each_with_object [] do |power, result|
-    value = 2**power
-    next unless value <= n
-    n -= value
-    result << [power+1, value]
-  end.reverse
-  divisors
-  cache = {}
-  cache[divisors[0][1]] = [divisors[0][0], divisors[0][0]-1]
-
-  divisors.each_cons 2 do |(ln, lv), (hn, hv)|
-    ways_to_sum = (hn-ln)*cache[lv][0] + cache[lv][1]
-    cache[hv] = [
-      ways_to_sum,
-      ways_to_sum - cache[lv][0],
-    ]
+  max_power = Math.log(n) / Math.log(2)
+  powers    = max_power.to_i.downto(0).each_with_object [] do |power, result|
+    next unless 2**power <= n
+    n -= 2**power
+    result.unshift power
   end
-  cache[divisors[-1][1]][0]
+
+  powers
+    .each_cons(2)
+    .reduce([powers[0]+1, powers[0]]) { |(sum, sum_without), (prev, crnt)|
+      # sum         = number of ways to make the number created by the previous powers
+      # sum_without = sum, but without the ways that involve the previous highest power
+      #
+      # eg if the previous powers were [2, 3], that would correspond to values of
+      # [4, 8] (because they are powers of 2) which add up to 12.
+      # and (sum, sum_without) = (5, 2) because there are 5 ways to make 12,
+      # 2 of which don't involve a 2**3=8
+
+      # To calculate the next sum, we look at how many ways we can make the current
+      # power without using the prev highest power. Each of these can be combined
+      # with each of the values counted by `sum`, so multiply them together.
+      # But we could also make the current power using the previous power, and
+      # combining that with all the ways to make `sum`, that don't involve the
+      # previous power (aka `sum_without`). There's only one way to make the
+      # current power using the preivous power (implicitly: we're not using
+      # any powers lower than that)
+      new_sum = (crnt-prev)*sum + sum_without
+      [new_sum, new_sum-sum]
+    }.first
 end
 
-num_ways2 10**25 # => 178653872807
+# this one wound up being useful for testing
+num_ways2 4+8+32 # => 12
 
-1.upto 100 do |i|
-  s1 = num_ways(i).size
-  s2 = num_ways2(i)
-  next if s1 == s2
-  s1 # =>
-  s2 # =>
-  raise
-end
-n = 4+8+32 # => 44
-ways = num_ways n
-ways.size    # => 12
-num_ways2(n) # => 12
-ways
-# => [[32, 8, 4],
-#     [32, 8, 2, 2],
-#     [32, 8, 2, 1, 1],
-#     [32, 4, 4, 2, 2],
-#     [32, 4, 4, 2, 1, 1],
-#     [16, 16, 8, 4],
-#     [16, 16, 8, 2, 2],
-#     [16, 16, 8, 2, 1, 1],
-#     [16, 16, 4, 4, 2, 2],
-#     [16, 16, 4, 4, 2, 1, 1],
-#     [16, 8, 8, 4, 4, 2, 2],
-#     [16, 8, 8, 4, 4, 2, 1, 1]]
-
-
-num_ways2 10**25 # => 178653872807
+num_ways2(10**25) # => 178653872807
