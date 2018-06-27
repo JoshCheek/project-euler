@@ -7,13 +7,13 @@ def row(row)
   start       = row*(row-1)/2 + 1
   stop        = row*(row+1)/2 + 1
 
-  index = -1
+  index = -1_i64
   sum   = BigInt.new "0"
   (start...stop).each do |crnt|
     index += 1
     # p [crnt, index] if index % 1000 == 0
     next unless prime_cache[2][index]
-    next unless keep? prime_cache, [[2, index, 2]]
+    next unless keep? prime_cache, [[2_i64, index, 2_i64]]
     sum += crnt
   end
   sum
@@ -66,7 +66,7 @@ end
 
 def keep?(prime_cache, to_evaluate)
   sum  = 0
-  seen = {} of Tuple(Int32, Int32) => Bool
+  seen = {} of Tuple(Int64, Int64) => Bool
   until to_evaluate.empty?
     row, col, depth = to_evaluate.shift
     next if seen.has_key?({row, col})
@@ -90,9 +90,9 @@ def keep?(prime_cache, to_evaluate)
   false
 end
 
-3_u64.upto 10_u64 do |i|
-  puts row i
-end
+# 3_u64.upto 10_u64 do |i|
+#   puts row i
+# end
 
 puts "===== row(8) ====="
 result1 = row 8_u64 # 60
@@ -104,15 +104,15 @@ result2 = row(10_000_u64) # 950007619
 puts result2
 puts
 
-# puts "===== row(5_678_027) ====="
-# result3 = row(5_678_027_u64) # 244862728884940460
-# puts result3
-# puts
-#
-# puts "===== row(7_208_785) ====="
-# result4 = row(7_208_785_u64) # 187307955442230172705
-# puts result4
-# puts
-#
-# puts "===== row(5_678_027) + row(7_208_785)  ====="
-# puts result3 + result4 # 187552818171115113165
+puts "===== row(5_678_027) ====="
+result3 = row(5_678_027_u64) # 244862728884940460
+puts result3
+puts
+
+puts "===== row(7_208_785) ====="
+result4 = row(7_208_785_u64) # 187307955442230172705
+puts result4
+puts
+
+puts "===== row(5_678_027) + row(7_208_785)  ====="
+puts result3 + result4 # 187552818171115113165
