@@ -1,31 +1,25 @@
 # https://projecteuler.net/problem=121
-#
-# WTF? I'm consistently getting ~11/100, not 11/120
-# and the banker is consistently losing money!
 
-def win?(n)
-  hist = []
-  bag  = [:red, :blue]
-  n.times do
-    hist << bag.sample
-    bag = bag.push(:red).shuffle.take(2)
-  end
-  hist.count { |disc| disc == :blue } > hist.count { |disc| disc == :red }
+def probabilities(turns, red:, blue:)
+  likelihood = blue.to_r / (blue+red)
+  return [[1, likelihood], [0, 1-likelihood]] if turns == 1
+  probabilities(turns-1, red: red+1, blue: blue)
+    .group_by { |blue_count, blue_prob| blue_count }
+    .transform_values { |probs| probs.map(&:last).reduce(0, :+) }
+    .flat_map { |blue_count, blue_prob|
+      [ [blue_count+1, blue_prob*likelihood],
+        [blue_count,   blue_prob*(1-likelihood)]
+      ]
+    }
 end
 
-
-play_count = 10_000
-win_count  = 0
-money      = 0
-play_count.times do
-  money += 1
-  if win? 4
-    money     -= 10
-    win_count += 1
-  end
+def payout(turns)
+  win_probability = probabilities(turns, red: 1, blue: 1)
+    .select { |count, probability| count > (turns-count) }
+    .map(&:last)
+    .sum
+  (1/win_probability).to_i
 end
 
-money                       # => -1110
-win_count.to_f / play_count # => 0.1111
-11.0           / 120        # => 0.09166666666666666
-
+payout 4  # => 10
+payout 15 # => 2269
