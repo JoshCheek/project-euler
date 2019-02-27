@@ -14,18 +14,24 @@ def square?(n)
   @squares.include? n
 end
 
-3.step do |x|
-  p x: x if x % 1000 == 0
-  x.pred.downto 2 do |y|
-    next unless square?(x-y)
-    next unless square?(x+y)
-    y.pred.downto 1 do |z|
-      next unless square?(y-z)
-      next unless square?(x-z)
-      next unless square?(x+z)
-      next unless square?(y+z)
-      p x: x, y: y, z: z, sum: x+y+z
-      exit
+
+gen_pairs = Enumerator.new do |y|
+  2.step do |a|
+    1.upto a.pred do |b|
+      next unless square? a-b
+      next unless square? a+b
+      y << [a, b]
     end
   end
+end
+
+# keys are always larger than values
+pairs = Hash.new { |h, k| h[k] = [] }
+gen_pairs.each do |x, y|
+  p x: x
+  if (z = (pairs[x] & pairs[y]).min)
+    p x: x, y: y, z: z, sum: x+y+z
+    exit
+  end
+  pairs[x] << y
 end
